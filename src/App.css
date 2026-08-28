@@ -21,7 +21,31 @@ body {
   max-width: 460px;
   margin: 0 auto;
   padding: 32px 16px 4px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
 }
+
+.user-menu { display: flex; align-items: center; gap: 8px; padding-top: 2px; font-size: 12px; color: #57534e; }
+.user-menu button { width: 34px; height: 34px; display: grid; place-items: center; border: 1px solid #d6d3d1; border-radius: 9px; background: white; cursor: pointer; color: #57534e; }
+
+.auth-page { min-height: 100vh; display: grid; place-items: center; padding: 24px 16px; background: #e4e7ea; }
+.auth-card { width: min(100%, 420px); padding: 28px; border-radius: 20px; background: #fff; box-shadow: 0 18px 50px rgba(24, 33, 47, .12); color: #141a24; }
+.auth-mark { width: 48px; height: 48px; display: grid; place-items: center; border-radius: 14px; background: #18212f; color: white; }
+.auth-eyebrow { margin: 18px 0 4px; color: #8c9bb2; font-size: 11px; letter-spacing: .16em; }
+.auth-card h1 { margin: 0; font-size: 26px; }
+.auth-description { margin: 8px 0 20px; color: #6e7887; font-size: 13px; line-height: 1.7; }
+.auth-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 4px; border-radius: 11px; background: #f0f1f3; }
+.auth-tabs button { padding: 9px; border: 0; border-radius: 8px; background: transparent; color: #6e7887; cursor: pointer; }
+.auth-tabs button.active { background: white; color: #141a24; font-weight: 700; box-shadow: 0 1px 4px rgba(0,0,0,.08); }
+.auth-form { display: grid; gap: 14px; margin-top: 18px; }
+.auth-form label { display: grid; gap: 6px; color: #57534e; font-size: 12px; font-weight: 600; }
+.auth-form input { min-height: 44px; padding: 0 12px; border: 1px solid #d6d3d1; border-radius: 9px; font: inherit; font-weight: 400; }
+.auth-form input:focus { outline: 3px solid rgba(245,165,36,.25); border-color: #f5a524; }
+.auth-submit { min-height: 46px; border: 0; border-radius: 9px; background: #18212f; color: white; font-size: 15px; font-weight: 700; cursor: pointer; }
+.auth-error { margin: 0; color: #c0392b; font-size: 12px; }
+.demo-account { margin: 14px 0 0; padding: 10px; border-radius: 8px; background: #fdf0da; color: #79520c; font-size: 12px; text-align: center; }
 
 .app-header h1 {
   margin: 0;

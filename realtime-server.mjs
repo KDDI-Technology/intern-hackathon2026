@@ -1,4 +1,5 @@
 import http from "node:http";
+import { readFileSync, writeFileSync } from "node:fs";
 
 const PORT = Number(process.env.REALTIME_PORT || 3001);
 const clients = new Map();
@@ -8,7 +9,23 @@ const seatIds = Array.from({ length: 20 }, (_, index) => {
   const seat = index % 4;
   return `r${row}-${seat}`;
 });
-const seats = Object.fromEntries(seatIds.map((id) => [id, false]));
+const SEAT_DATA_FILE = new URL("./seat-data.json", import.meta.url);
+const emptySeats = () => Object.fromEntries(seatIds.map((id) => [id, false]));
+let seats = emptySeats();
+let seatsInitialized = false;
+
+try {
+  const saved = JSON.parse(readFileSync(SEAT_DATA_FILE, "utf8"));
+  seats = Object.fromEntries(seatIds.map((id) => [id, saved.seats?.[id] || false]));
+  seatsInitialized = Boolean(saved.initialized);
+} catch {
+  // 初回起動時は空席で開始し、最初のクライアントの保存値を受け入れる
+}
+
+function saveSeats() {
+  writeFileSync(SEAT_DATA_FILE, JSON.stringify({ initialized: true, seats }, null, 2));
+  seatsInitialized = true;
+}
 
 function cors(res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -46,7 +63,7 @@ const server = http.createServer((req, res) => {
     if (!clients.has(channel)) clients.set(channel, new Set());
     clients.get(channel).add(res);
 
-    if (channel === "seats") sendSse(res, { t: "snapshot", seats });
+    if (channel === "seats") sendSse(res, { t: "snapshot", seats, initialized: seatsInitialized });
 
     req.on("close", () => {
       clients.get(channel)?.delete(res);
@@ -66,13 +83,19 @@ const server = http.createServer((req, res) => {
 
         if (channel === "seats") {
           if (payload?.t === "get") {
-            broadcast("seats", { t: "snapshot", seats });
+            broadcast("seats", { t: "snapshot", seats, initialized: seatsInitialized });
           } else if (payload?.t === "set" && seatIds.includes(payload.id)) {
-            seats[payload.id] = !!payload.occupied;
-            broadcast("seats", { t: "set", id: payload.id, occupied: seats[payload.id] });
+            seats[payload.id] = payload.seat && typeof payload.seat === "object" ? payload.seat : false;
+            saveSeats();
+            broadcast("seats", { t: "set", id: payload.id, seat: seats[payload.id] });
           } else if (payload?.t === "replace" && payload.seats && typeof payload.seats === "object") {
-            for (const id of seatIds) seats[id] = !!payload.seats[id];
-            broadcast("seats", { t: "snapshot", seats });
+            for (const id of seatIds) seats[id] = payload.seats[id] || false;
+            saveSeats();
+            broadcast("seats", { t: "snapshot", seats, initialized: true });
+          } else if (payload?.t === "init" && !seatsInitialized && payload.seats && typeof payload.seats === "object") {
+            for (const id of seatIds) seats[id] = payload.seats[id] || false;
+            saveSeats();
+            broadcast("seats", { t: "snapshot", seats, initialized: true });
           }
         } else if (channel === "ogori") {
           broadcast("ogori", payload);

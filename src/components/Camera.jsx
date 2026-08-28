@@ -11,8 +11,6 @@ function Camera() {
 
   const [capturedTime, setCapturedTime] =
     useState(null);
-
-
   /**
    * 写真を撮影する
    */
@@ -134,7 +132,6 @@ function Camera() {
       <h2>
         お菓子在庫確認
       </h2>
-
 
       <p className="status">
         {message}

@@ -1,7 +1,7 @@
-import { useEffect, useRef, useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { createRealtimeChannel } from "../realtime";
-import { Armchair, User, RefreshCw, Thermometer } from "lucide-react";
 
+const SEAT_STORAGE_KEY = "seatmap:custom-v1";
 const TEMP_STORAGE_KEY = "tempmap:v1";
 
 // レイアウト定義: 窓側から順に「4席の列」と「通路」を並べる
@@ -30,6 +30,29 @@ function buildSeatIds() {
 }
 
 const SEAT_IDS = buildSeatIds();
+const emptySeats = () => Object.fromEntries(SEAT_IDS.map((id) => [id, false]));
+
+function normalizeSeats(data = {}) {
+  return Object.fromEntries(
+    SEAT_IDS.map((id) => {
+      const seat = data[id];
+      if (seat === true) return [id, { occupied: true, surname: "" }];
+      return [id, seat && typeof seat === "object" ? seat : false];
+    }),
+  );
+}
+
+function readCachedSeats() {
+  try {
+    return normalizeSeats(JSON.parse(localStorage.getItem(SEAT_STORAGE_KEY) || "{}"));
+  } catch {
+    return emptySeats();
+  }
+}
+
+function cacheSeats(seats) {
+  localStorage.setItem(SEAT_STORAGE_KEY, JSON.stringify(seats));
+}
 const PAIR_ID_OF_SEAT = {};
 SEAT_IDS.forEach((id, idx) => {
   PAIR_ID_OF_SEAT[id] = `p${Math.floor(idx / 2)}`;
@@ -58,82 +81,92 @@ function tempColor(value) {
   return { bg: "#fee2e2", text: "#dc2626", border: "#fca5a5" };
 }
 
-// ── 永続化ヘルパー（ブラウザの localStorage を使用） ───────
-// 本番で座席状況をサーバー・複数端末間で共有したい場合は、
-// ここを /api/seats などの自前バックエンド呼び出しに差し替えてください。
-function loadJSON(key) {
-  try {
-    const raw = window.localStorage.getItem(key);
-    return raw ? JSON.parse(raw) : null;
-  } catch {
-    return null;
-  }
-}
-
-function saveJSON(key, value) {
-  try {
-    window.localStorage.setItem(key, JSON.stringify(value));
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-function SeatsView() {
-  const emptySeats = () => {
-    const s = {};
-    SEAT_IDS.forEach((id) => (s[id] = false));
-    return s;
-  };
-
-  const [seats, setSeats] = useState(emptySeats);
+function SeatsView({ currentUser }) {
+  const surname = currentUser?.name?.trim().split(/[\s　]+/)[0] || "利用者";
+  const [seats, setSeats] = useState(readCachedSeats);
+  const [loaded] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [connected, setConnected] = useState(false);
   const [selectedSeat, setSelectedSeat] = useState(null);
-  const chRef = useRef(null);
+  const channelRef = useRef(null);
 
   useEffect(() => {
-    const ch = createRealtimeChannel("seats");
-    chRef.current = ch;
-
-    ch.onopen = () => {
-      setConnected(true);
-      ch.postMessage({ t: "get" });
-    };
-    ch.onerror = () => setConnected(false);
-    ch.onmessage = (event) => {
-      const m = event.data;
-      if (m.t === "snapshot" && m.seats) {
-        setSeats((prev) => ({ ...prev, ...m.seats }));
-        setSaving(false);
-      } else if (m.t === "set" && SEAT_IDS.includes(m.id)) {
-        setSeats((prev) => ({ ...prev, [m.id]: !!m.occupied }));
-        setSaving(false);
+    const realtime = createRealtimeChannel("seats");
+    channelRef.current = realtime;
+    realtime.onmessage = ({ data }) => {
+      if (data.t === "snapshot") {
+        if (!data.initialized) {
+          realtime.postMessage({ t: "init", seats: readCachedSeats() });
+          return;
+        }
+        const next = normalizeSeats(data.seats);
+        setSeats(next);
+        cacheSeats(next);
+      } else if (data.t === "set" && SEAT_IDS.includes(data.id)) {
+        setSeats((prev) => {
+          const next = { ...prev, [data.id]: data.seat || false };
+          cacheSeats(next);
+          return next;
+        });
       }
     };
 
-    return () => ch.close();
+    const syncFromAnotherTab = (event) => {
+      if (event.key === SEAT_STORAGE_KEY && event.newValue) {
+        try { setSeats(normalizeSeats(JSON.parse(event.newValue))); } catch { /* 無効な保存値は無視 */ }
+      }
+    };
+    window.addEventListener("storage", syncFromAnotherTab);
+    return () => {
+      realtime.close();
+      channelRef.current = null;
+      window.removeEventListener("storage", syncFromAnotherTab);
+    };
   }, []);
+
+  const persist = (nextSeats, payload) => {
+    setSaving(true);
+    cacheSeats(nextSeats);
+    channelRef.current?.postMessage(payload);
+    window.setTimeout(() => setSaving(false), 250);
+  };
 
   const selectSeat = (id) => setSelectedSeat(id);
 
   const setStatus = (isOccupied) => {
     if (!selectedSeat) return;
-    setSaving(true);
-    chRef.current?.postMessage({ t: "set", id: selectedSeat, occupied: isOccupied });
+    setSeats((prev) => {
+      const next = {
+        ...prev,
+        [selectedSeat]: isOccupied
+          ? {
+              occupied: true,
+              surname,
+              name: currentUser?.name || surname,
+              email: currentUser?.email || "",
+            }
+          : false,
+      };
+      persist(next, { t: "set", id: selectedSeat, seat: next[selectedSeat] });
+      return next;
+    });
     setSelectedSeat(null);
   };
 
   const clearAll = () => {
-    const next = emptySeats();
-    setSaving(true);
+    const next = {};
+    SEAT_IDS.forEach((id) => (next[id] = false));
+    setSeats(next);
     setSelectedSeat(null);
-    chRef.current?.postMessage({ t: "replace", seats: next });
+    persist(next, { t: "replace", seats: next });
   };
 
   const total = SEAT_IDS.length;
   const occupiedCount = Object.values(seats).filter(Boolean).length;
   const availableCount = total - occupiedCount;
+
+  if (!loaded) {
+    return <div style={{ padding: "2rem 0", color: "#57534e", fontSize: 14 }}>読み込み中…</div>;
+  }
 
   let rowIndex = 0;
 
@@ -150,26 +183,19 @@ function SeatsView() {
         }}
       >
         <div style={{ display: "flex", gap: 8 }}>
-          <div style={{ background: "#f5f4f2", borderRadius: "8px", padding: "0.5rem 0.875rem", minWidth: 76 }}>
+          <div style={{ background: "#f5f4f2", borderRadius: "8px", padding: "0.5rem 0.875rem", minWidth: 76, textAlign: "center" }}>
             <p style={{ fontSize: 12, color: "#57534e", margin: 0 }}>空席</p>
             <p style={{ fontSize: 20, fontWeight: 500, margin: 0 }}>{availableCount}</p>
           </div>
-          <div style={{ background: "#f5f4f2", borderRadius: "8px", padding: "0.5rem 0.875rem", minWidth: 76 }}>
+          <div style={{ background: "#f5f4f2", borderRadius: "8px", padding: "0.5rem 0.875rem", minWidth: 76, textAlign: "center" }}>
             <p style={{ fontSize: 12, color: "#57534e", margin: 0 }}>着席</p>
             <p style={{ fontSize: 20, fontWeight: 500, margin: 0 }}>{occupiedCount}</p>
           </div>
         </div>
-        <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
-          <span style={{ fontSize: 12, color: connected ? "#16a34a" : "#dc2626" }}>
-            {connected ? "● リアルタイム接続中" : "● 接続待ち"}
-          </span>
-          {saving && <span style={{ fontSize: 12, color: "#a8a29e" }}>同期中…</span>}
-          <button
-            onClick={clearAll}
-            disabled={!connected}
-            style={{ fontSize: 13, display: "inline-flex", alignItems: "center", gap: 4, cursor: connected ? "pointer" : "not-allowed" }}
-          >
-            <RefreshCw size={14} aria-hidden="true" />
+        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+          {saving && <span style={{ fontSize: 12, color: "#a8a29e" }}>保存中…</span>}
+          <button onClick={clearAll} style={{ fontSize: 13 }}>
+            <i className="ti ti-refresh" aria-hidden="true" style={{ fontSize: 16, verticalAlign: -3, marginRight: 4 }}></i>
             全部空席にする
           </button>
         </div>
@@ -189,54 +215,170 @@ function SeatsView() {
             minHeight: 260,
           }}
         >
-          <div style={{ width: 64, height: 64, borderRadius: "50%", background: "#ffffff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, fontWeight: 500 }}>
+          <div
+            style={{
+              width: 64,
+              height: 64,
+              borderRadius: "50%",
+              background: "#ffffff",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: 22,
+              fontWeight: 500,
+            }}
+          >
             {SEAT_IDS.indexOf(selectedSeat) + 1}
           </div>
           <span style={{ fontSize: 14, color: "#57534e" }}>
             {SEAT_IDS.indexOf(selectedSeat) + 1}番の状態を選択
           </span>
           <div style={{ display: "flex", gap: 10 }}>
-            <button onClick={() => setStatus(false)} disabled={!connected} style={{ fontSize: 14, color: "#57534e", padding: "0.5rem 1rem", display: "inline-flex", alignItems: "center", gap: 6, cursor: connected ? "pointer" : "not-allowed" }}>
-              <Armchair size={16} aria-hidden="true" />空き
+            <button
+              onClick={() => setStatus(false)}
+              style={{
+                fontSize: 14,
+                fontWeight: 500,
+                color: "#57534e",
+                background: "#ffffff",
+                border: "2px solid #a8a29e",
+                borderRadius: 8,
+                padding: "0.6rem 1.1rem",
+              }}
+            >
+              空き
             </button>
-            <button onClick={() => setStatus(true)} disabled={!connected} style={{ fontSize: 14, color: "#dc2626", borderColor: "#ef4444", padding: "0.5rem 1rem", display: "inline-flex", alignItems: "center", gap: 6, cursor: connected ? "pointer" : "not-allowed" }}>
-              <User size={16} aria-hidden="true" />使用中
+            <button
+              onClick={() => setStatus(true)}
+              style={{
+                fontSize: 14,
+                fontWeight: 500,
+                color: "#dc2626",
+                background: "#fee2e2",
+                border: "2px solid #dc2626",
+                borderRadius: 8,
+                padding: "0.6rem 1.1rem",
+              }}
+            >
+              使用中
             </button>
           </div>
-          <button onClick={() => setSelectedSeat(null)} aria-label="キャンセル" style={{ fontSize: 13, color: "#a8a29e", cursor: "pointer" }}>キャンセル</button>
+          <button
+            onClick={() => setSelectedSeat(null)}
+            aria-label="キャンセル"
+            style={{
+              fontSize: 13,
+              fontWeight: 500,
+              color: "#57534e",
+              background: "#ffffff",
+              border: "2px solid #d6d3d1",
+              borderRadius: 8,
+              padding: "0.5rem 1rem",
+            }}
+          >
+            キャンセル
+          </button>
         </div>
       ) : (
-        <div style={{ background: "#f5f4f2", borderRadius: 12, padding: "2rem", display: "flex", flexDirection: "column", alignItems: "center" }}>
-          <div style={{ width: "100%", maxWidth: 300, textAlign: "center", fontSize: 17, fontWeight: 500, color: "#57534e", borderBottom: "0.5px solid #e7e5e4", paddingBottom: 12, marginBottom: 18 }}>窓</div>
+        <div
+          style={{
+            background: "#f5f4f2",
+            borderRadius: 12,
+            padding: "2rem",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+          }}
+        >
+          <div
+            style={{
+              width: "100%",
+              maxWidth: 300,
+              textAlign: "center",
+              fontSize: 17,
+              fontWeight: 500,
+              color: "#57534e",
+              borderBottom: "0.5px solid #e7e5e4",
+              paddingBottom: 12,
+              marginBottom: 18,
+            }}
+          >
+            窓
+          </div>
+
           <div style={{ display: "flex", flexDirection: "column", gap: 14, width: "100%", maxWidth: 300 }}>
             {LAYOUT.map((block, blockIdx) => {
-              if (block.type === "aisle") return <div key={`aisle-${blockIdx}`} style={{ textAlign: "center", fontSize: 17, fontWeight: 500, color: "#57534e", padding: "2px 0" }}>通路</div>;
+              if (block.type === "aisle") {
+                return (
+                  <div key={`aisle-${blockIdx}`} style={{ textAlign: "center", fontSize: 17, fontWeight: 500, color: "#57534e", padding: "2px 0" }}>
+                    通路
+                  </div>
+                );
+              }
               const currentRow = rowIndex;
               rowIndex++;
               return (
-                <div key={`row-${blockIdx}`} style={{ display: "flex", justifyContent: "center", border: "0.5px solid #d6d3d1", borderRadius: 8, overflow: "hidden", width: "fit-content", margin: "0 auto" }}>
+                <div
+                  key={`row-${blockIdx}`}
+                  style={{
+                    display: "flex",
+                    justifyContent: "center",
+                    border: "0.5px solid #d6d3d1",
+                    borderRadius: 8,
+                    overflow: "hidden",
+                    width: "fit-content",
+                    margin: "0 auto",
+                  }}
+                >
                   {Array.from({ length: block.count }).map((_, seatIdx) => {
                     const id = `r${currentRow}-${seatIdx}`;
                     const isOccupied = !!seats[id];
+                    const occupantSurname = typeof seats[id] === "object" ? seats[id].surname : "";
                     const seatNumber = SEAT_IDS.indexOf(id) + 1;
+                    const isSelected = selectedSeat === id;
                     return (
                       <button
                         key={id}
                         onClick={() => selectSeat(id)}
-                        disabled={!connected}
                         aria-label={`${seatNumber}番 ${isOccupied ? "着席中" : "空席"}`}
                         aria-pressed={isOccupied}
                         style={{
-                          width: 56, height: 56, padding: 0, borderRadius: 0, border: "none",
-                          borderRight: seatIdx < block.count - 1 ? "0.5px solid #d6d3d1" : "none",
+                          width: 56,
+                          height: 56,
+                          padding: 0,
+                          borderRadius: 0,
+                          border: isSelected ? "2px solid #ef4444" : "none",
+                          borderRight:
+                            !isSelected && seatIdx < block.count - 1
+                              ? "0.5px solid #d6d3d1"
+                              : isSelected
+                              ? "2px solid #ef4444"
+                              : "none",
                           background: isOccupied ? "#fee2e2" : "#ffffff",
                           color: isOccupied ? "#dc2626" : "#57534e",
-                          display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
-                          cursor: connected ? "pointer" : "not-allowed",
+                          display: "flex",
+                          flexDirection: "column",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          cursor: "pointer",
+                          transition: "transform 0.1s",
+                          position: "relative",
+                          zIndex: isSelected ? 1 : 0,
                         }}
+                        onMouseDown={(e) => (e.currentTarget.style.transform = "scale(0.92)")}
+                        onMouseUp={(e) => (e.currentTarget.style.transform = "scale(1)")}
+                        onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
                       >
-                        <span style={{ fontSize: 17, fontWeight: 500 }}>{seatNumber}</span>
-                        {isOccupied ? <User size={15} aria-hidden="true" color="#dc2626" /> : <Armchair size={15} aria-hidden="true" color="#57534e" />}
+                        <span style={{ fontSize: 17, fontWeight: 500, color: isOccupied ? "#dc2626" : "#57534e" }}>
+                          {seatNumber}
+                        </span>
+                        {isOccupied ? (
+                          <span style={{ fontSize: 10, fontWeight: 700, lineHeight: 1.1, color: "#dc2626" }}>
+                            {occupantSurname || "使用中"}
+                          </span>
+                        ) : (
+                          <i className="ti ti-armchair-2" aria-hidden="true" style={{ fontSize: 15, color: "#57534e" }}></i>
+                        )}
                       </button>
                     );
                   })}
@@ -248,19 +390,39 @@ function SeatsView() {
       )}
 
       <p style={{ fontSize: 12, color: "#a8a29e", marginTop: 12, textAlign: "center" }}>
-        変更は同じネットワーク上の端末へリアルタイムに反映されます。
+        席をタップして、空席と着席を切り替えられます。
       </p>
     </div>
   );
 }
 
-function TemperatureView() {
-  const [temps] = useState(() => {
-    const stored = loadJSON(TEMP_STORAGE_KEY) || {};
-    const merged = { ...stored, ...DEFAULT_TEMPS };
-    saveJSON(TEMP_STORAGE_KEY, merged);
-    return merged;
-  });
+function TemperatureView({ currentUser }) {
+  const [temps, setTemps] = useState(DEFAULT_TEMPS);
+  const [seatAssignments, setSeatAssignments] = useState({});
+  const [loaded, setLoaded] = useState(false);
+  const currentSurname = currentUser?.name?.trim().split(/[\s　]+/)[0] || "";
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const tempResult = await window.storage.get(TEMP_STORAGE_KEY, false);
+        const stored = tempResult && tempResult.value ? JSON.parse(tempResult.value) : {};
+        const merged = { ...stored, ...DEFAULT_TEMPS };
+        setTemps(merged);
+        setSeatAssignments(readCachedSeats());
+        await window.storage.set(TEMP_STORAGE_KEY, JSON.stringify(merged), false);
+      } catch (e) {
+        // 保存データなし
+        setTemps(DEFAULT_TEMPS);
+      } finally {
+        setLoaded(true);
+      }
+    })();
+  }, []);
+
+  if (!loaded) {
+    return <div style={{ padding: "2rem 0", color: "#57534e", fontSize: 14 }}>読み込み中…</div>;
+  }
 
   let rowIndex = 0;
 
@@ -341,15 +503,23 @@ function TemperatureView() {
                   const pairId = PAIR_ID_OF_SEAT[idA];
                   const value = temps[pairId];
                   const colors = tempColor(value);
+                  const isMySeat = [seatAssignments[idA], seatAssignments[idB]].some((seat) => {
+                    if (!seat || typeof seat !== "object") return false;
+                    if (currentUser?.email && seat.email) {
+                      return seat.email === currentUser.email;
+                    }
+                    return Boolean(currentSurname && seat.surname === currentSurname);
+                  });
                   return (
                     <div
                       key={groupIdx}
-                      aria-label={`${seatNumberA}・${seatNumberB}番 ${value !== undefined ? value + "度" : "未記録"}`}
+                      aria-label={`${seatNumberA}・${seatNumberB}番 ${value !== undefined ? value + "度" : "未記録"}${isMySeat ? " あなたの席" : ""}`}
                       style={{
                         width: 112,
                         height: 56,
                         borderRadius: 8,
-                        border: "0.5px solid #d6d3d1",
+                        border: isMySeat ? "3px solid #2563eb" : "0.5px solid #d6d3d1",
+                        boxShadow: isMySeat ? "0 0 0 3px rgba(37, 99, 235, 0.14)" : "none",
                         background: colors.bg,
                         color: colors.text,
                         display: "flex",
@@ -380,21 +550,23 @@ function TemperatureView() {
   );
 }
 
-export default function SeatAndTemperature() {
+export default function SeatAndTemperatureApp({ currentUser }) {
   const [activeTab, setActiveTab] = useState("seats");
 
   return (
-    <div style={{ padding: "0.5rem 0" }}>
-      {activeTab === "seats" ? <SeatsView /> : <TemperatureView />}
-
+    <div style={{ padding: "0.5rem 1.5rem" }}>
       <div
         style={{
+          position: "sticky",
+          top: 0,
+          left: 0,
+          right: 0,
           display: "flex",
           background: "#ffffff",
           border: "0.5px solid #e7e5e4",
           borderRadius: 12,
           overflow: "hidden",
-          marginTop: "1.5rem",
+          marginBottom: "1.5rem",
         }}
       >
         <button
@@ -408,14 +580,9 @@ export default function SeatAndTemperature() {
             fontWeight: activeTab === "seats" ? 500 : 400,
             background: activeTab === "seats" ? "#f5f4f2" : "#ffffff",
             color: activeTab === "seats" ? "#1c1917" : "#a8a29e",
-            display: "inline-flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: 6,
-            cursor: "pointer",
           }}
         >
-          <Armchair size={16} aria-hidden="true" />
+          <i className="ti ti-armchair-2" aria-hidden="true" style={{ fontSize: 16, verticalAlign: -3, marginRight: 6 }}></i>
           空席状況
         </button>
         <button
@@ -430,17 +597,14 @@ export default function SeatAndTemperature() {
             background: activeTab === "temp" ? "#f5f4f2" : "#ffffff",
             color: activeTab === "temp" ? "#1c1917" : "#a8a29e",
             borderLeft: "0.5px solid #e7e5e4",
-            display: "inline-flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: 6,
-            cursor: "pointer",
           }}
         >
-          <Thermometer size={16} aria-hidden="true" />
+          <i className="ti ti-temperature" aria-hidden="true" style={{ fontSize: 16, verticalAlign: -3, marginRight: 6 }}></i>
           温度記録
         </button>
       </div>
+
+      {activeTab === "seats" ? <SeatsView currentUser={currentUser} /> : <TemperatureView currentUser={currentUser} />}
     </div>
   );
 }

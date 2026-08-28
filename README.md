@@ -1,53 +1,12 @@
-# オフィスハブ（React + Vite）
+## intern-hackathon2026
 
-3つの社内アプリを1つに統合した実行可能な Vite プロジェクトです。
+2026年度インターン生による1Dayハッカソンの作品置き場
 
-- **おごりペア** (`src/components/OgoriPair.jsx`) — タブ間 BroadcastChannel を使ったランチマッチングPoC
-- **座席・温度** (`src/components/SeatAndTemperature.jsx`) — 座席の空き状況と室温の記録（ブラウザの localStorage に保存）
-- **在庫確認** (`src/components/Camera.jsx`) — Raspberry Pi 実機のカメラを `/api/camera/capture` 経由で呼び出し撮影
+### 免責
 
-`src/App.jsx` が3つをタブで切り替えるシェルです。
+数時間で作成したものなので、動作保証等なにもありません。
+ご理解の上ご利用ください。よろしくお願いします。
 
-## 動かし方
+### ライセンス
 
-```bash
-npm install
-npm run dev
-```
-
-表示された URL（通常 http://localhost:5173）をブラウザで開いてください。
-
-- 「おごりペア」と「座席・温度」はこのプロジェクトだけで完結して動きます。
-- 「在庫確認」はバックエンド（Raspberry Pi、`vite.config.js` の `pz03.local:3000` にプロキシ設定済み）が無い環境では「撮影に失敗しました」と表示されます。実機のRaspberry Piに接続した環境で動作確認してください。
-
-## ビルド
-
-```bash
-npm run build
-npm run preview
-```
-
-## 依存関係の変更点
-
-- `lucide-react` をアイコン用に追加しました（元の `ti ti-*` アイコンフォントの代わり）。
-- Tailwind CSS v4（`@tailwindcss/vite`）を追加し、`おごりペア` コンポーネントのユーティリティクラスをそのまま使えるようにしています。
-- 座席・温度データの永続化は、Claude Artifacts 専用の `window.storage` から、通常のブラウザで動く `localStorage` に置き換えています。複数端末で座席状況を共有したい場合は、ここを自前のバックエンドAPI呼び出しに差し替えてください。
-
----
-
-# React + Vite
-
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
-
-Currently, two official plugins are available:
-
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
-
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+MIT

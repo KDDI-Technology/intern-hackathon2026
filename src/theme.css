@@ -1,0 +1,275 @@
+/* ============================================================
+   カラートークン
+   ------------------------------------------------------------
+   色はすべてここで定義する。App.css も JSX のインラインスタイルも
+   var(--xxx) を参照するだけにして、切り替えは <html data-theme>
+   の1か所で行う。新しい色を足すときは必ず light / dark の両方を書く。
+   ============================================================ */
+
+:root,
+:root[data-theme="light"] {
+  color-scheme: light;
+
+  /* 土台 */
+  --bg: #f0f1f3;
+  --bg-auth: #e4e7ea;
+  --surface: #ffffff;
+  --surface-2: #f5f4f2;
+  --surface-3: #e7e5e4;
+  --border: #e1e4e8;
+  --border-strong: #d6d3d1;
+
+  /* 文字 */
+  --text: #141a24;
+  --text-body: #57534e;
+  --text-muted: #6e7887;
+  --text-subtle: #8c9bb2;
+
+  /* 影 */
+  --shadow-card: 0 5px 16px rgba(24, 33, 47, 0.06);
+  --shadow-raise: 0 12px 28px rgba(24, 33, 47, 0.14);
+  --shadow-raise-hover: 0 17px 34px rgba(24, 33, 47, 0.2);
+  --shadow-auth: 0 18px 50px rgba(24, 33, 47, 0.12);
+  --shadow-tab: 0 1px 4px rgba(0, 0, 0, 0.08);
+  --shadow-photo: 0 2px 8px rgba(0, 0, 0, 0.1);
+
+  /* 反転ボタン（ログイン・投稿・撮影） */
+  --brand-solid: #18212f;
+  --brand-solid-text: #ffffff;
+
+  /* アクセント */
+  --accent: #f5a524;
+  --accent-ring: rgba(245, 165, 36, 0.25);
+  --accent-soft: #fdf0da;
+  --accent-soft-text: #79520c;
+  --danger: #c0392b;
+
+  /* ホーム／ナビのサービス色 */
+  --app-on-accent: #ffffff;
+  --app-ogori-accent: #f5a524;
+  --app-ogori-soft: #fdf0da;
+  --app-lunch-accent: #e34b8b;
+  --app-lunch-soft: #fce7f1;
+  --app-seat-accent: #16a34a;
+  --app-seat-soft: #dcfce7;
+  --app-camera-accent: #222222;
+  --app-camera-soft: #e7e5e4;
+
+  /* ランチサポート */
+  --lunch-accent: #d52b71;
+  --lunch-accent-text: #ffffff;
+  --lunch-summary-bg: linear-gradient(135deg, #fff 0%, #fce7f1 100%);
+  --lunch-summary-border: #f4c7da;
+  --lunch-usage-shadow: 0 6px 18px rgba(213, 43, 113, 0.12);
+  --lunch-people-bg: #f7f7f8;
+  --lunch-people-value: #374151;
+  --lunch-detail-text: #4b5563;
+  --lunch-established-border: #71d39a;
+  --lunch-established-shadow: 0 5px 18px rgba(22, 163, 74, 0.1);
+  --state-recruit-bg: #fdf0da;
+  --state-recruit-text: #9a6306;
+  --state-done-bg: #dcfce7;
+  --state-done-text: #15803d;
+
+  /* お菓子在庫（カメラ） */
+  --photo-area-bg: #dddddd;
+  --photo-placeholder-text: #777777;
+  --camera-status-text: #555555;
+  --camera-time-text: #666666;
+
+  /* おごりペア（自販機の筐体イメージ） */
+  --og-page: #e4e7ea;
+  --og-chassis: #18212f;
+  --og-chassis-soft: #232f44;
+  --og-line: #33415a;
+  --og-led: #f5a524;
+  --og-lamp: #2ecc71;
+  --og-lamp-off: #4a5a73;
+  --og-red: #e5544b;
+  --og-paper: #fbfbfa;
+  --og-paper-2: #f1f1ed;
+  --og-paper-line: #e4e4e1;
+  --og-paper-line-2: #eaeae6;
+  --og-ink: #141a24;
+  --og-mute: #8c9bb2;
+  --og-paper-mute: #6e7887;
+  --og-chip-bg: #edede9;
+  --og-chip-text: #3f4650;
+  --og-ok: #1b7f4d;
+  --og-warn: #a66a00;
+  --og-alert: #c0392b;
+  --og-on-lamp: #06331c;
+  --og-disabled-bg: #c8cdd3;
+  --og-disabled-text: #8c9bb2;
+  --og-field-border: #c6cbd1;
+  --og-solo-bg: #dde1e6;
+  --og-solo-dot: #9aa3ad;
+  --og-live-bg: #d6efe0;
+  --og-live-text: #186b45;
+  --og-live-dot: #1fa85c;
+  --og-tabs-bg: #d5d9de;
+  --og-demo-bg: #d9dde2;
+  --og-dashed: #afb6be;
+
+  /* 座席マップ */
+  --seat-panel: #f5f4f2;
+  --seat-cell: #ffffff;
+  --seat-line: #d6d3d1;
+  --seat-line-soft: #e7e5e4;
+  --seat-text: #57534e;
+  --seat-subtle: #a8a29e;
+  --seat-strong: #1c1917;
+  --seat-tabbar: #ffffff;
+  --seat-tab-active: #f5f4f2;
+  --seat-occupied-bg: #fee2e2;
+  --seat-occupied-text: #dc2626;
+  --seat-select: #ef4444;
+
+  /* 温度マップ */
+  --temp-none-bg: #f5f4f2;
+  --temp-none-text: #a8a29e;
+  --temp-none-border: #d6d3d1;
+  --temp-cold-bg: #dbeafe;
+  --temp-cold-text: #2563eb;
+  --temp-cold-border: #93c5fd;
+  --temp-ok-bg: #dcfce7;
+  --temp-ok-text: #16a34a;
+  --temp-ok-border: #86efac;
+  --temp-hot-bg: #fee2e2;
+  --temp-hot-text: #dc2626;
+  --temp-hot-border: #fca5a5;
+  --temp-mine: #2563eb;
+  --temp-mine-ring: 0 0 0 3px rgba(37, 99, 235, 0.14);
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --bg: #0f141c;
+  --bg-auth: #0b0f16;
+  --surface: #171e29;
+  --surface-2: #1e2632;
+  --surface-3: #262f3d;
+  --border: #2c3646;
+  --border-strong: #3a4658;
+
+  --text: #e7ecf3;
+  --text-body: #c3ccd9;
+  --text-muted: #a3aebf;
+  --text-subtle: #8b97a8;
+
+  --shadow-card: 0 5px 16px rgba(0, 0, 0, 0.45);
+  --shadow-raise: 0 12px 28px rgba(0, 0, 0, 0.55);
+  --shadow-raise-hover: 0 17px 34px rgba(0, 0, 0, 0.62);
+  --shadow-auth: 0 18px 50px rgba(0, 0, 0, 0.6);
+  --shadow-tab: 0 1px 4px rgba(0, 0, 0, 0.5);
+  --shadow-photo: 0 2px 8px rgba(0, 0, 0, 0.45);
+
+  /* 明るい面に暗い文字。ダークでは主要ボタンを反転させる */
+  --brand-solid: #e7ecf3;
+  --brand-solid-text: #10151e;
+
+  --accent: #ffb94a;
+  --accent-ring: rgba(255, 185, 74, 0.3);
+  --accent-soft: #3a2a0c;
+  --accent-soft-text: #f0c87a;
+  --danger: #ff6b5e;
+
+  --app-on-accent: #10151e;
+  --app-ogori-accent: #ffb94a;
+  --app-ogori-soft: #3a2a0c;
+  --app-lunch-accent: #ff5fa2;
+  --app-lunch-soft: #3a1526;
+  --app-seat-accent: #35d97a;
+  --app-seat-soft: #10331f;
+  --app-camera-accent: #7d6df0;
+  --app-camera-soft: #262238;
+
+  --lunch-accent: #ff5fa2;
+  --lunch-accent-text: #2a0714;
+  --lunch-summary-bg: linear-gradient(135deg, #1c2431 0%, #2f1524 100%);
+  --lunch-summary-border: #4a2337;
+  --lunch-usage-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
+  --lunch-people-bg: #1e2632;
+  --lunch-people-value: #dce3ec;
+  --lunch-detail-text: #c3ccd9;
+  --lunch-established-border: #2e7d52;
+  --lunch-established-shadow: 0 5px 18px rgba(0, 0, 0, 0.45);
+  --state-recruit-bg: #3a2a0c;
+  --state-recruit-text: #f0c87a;
+  --state-done-bg: #10331f;
+  --state-done-text: #6fdca0;
+
+  --photo-area-bg: #232c3a;
+  --photo-placeholder-text: #8b97a8;
+  --camera-status-text: #a3aebf;
+  --camera-time-text: #98a4b4;
+
+  --og-page: #10151e;
+  --og-chassis: #1c2432;
+  --og-chassis-soft: #27334a;
+  --og-line: #3a4964;
+  --og-led: #ffb94a;
+  --og-lamp: #35d97a;
+  --og-lamp-off: #4a5a73;
+  --og-red: #ff6e64;
+  --og-paper: #1f2735;
+  --og-paper-2: #263041;
+  --og-paper-line: #33405a;
+  --og-paper-line-2: #2e3a4e;
+  --og-ink: #e8edf4;
+  --og-mute: #94a2b8;
+  --og-paper-mute: #9aa6b6;
+  --og-chip-bg: #2c3648;
+  --og-chip-text: #c8d2e0;
+  --og-ok: #4ade80;
+  --og-warn: #e5a93a;
+  --og-alert: #ff6b5e;
+  --og-on-lamp: #06331c;
+  --og-disabled-bg: #303b4d;
+  --og-disabled-text: #6d7a8c;
+  --og-field-border: #3a4658;
+  --og-solo-bg: #232b39;
+  --og-solo-dot: #6d7a8c;
+  --og-live-bg: #16321f;
+  --og-live-text: #6fdca0;
+  --og-live-dot: #35d97a;
+  --og-tabs-bg: #1b2330;
+  --og-demo-bg: #2a3446;
+  --og-dashed: #3a4658;
+
+  --seat-panel: #1b2330;
+  --seat-cell: #222b39;
+  --seat-line: #33405a;
+  --seat-line-soft: #2e3a4e;
+  --seat-text: #c3ccd9;
+  --seat-subtle: #8b97a8;
+  --seat-strong: #e8edf4;
+  --seat-tabbar: #1f2735;
+  --seat-tab-active: #2a3446;
+  --seat-occupied-bg: #3a1e1e;
+  --seat-occupied-text: #ff7a70;
+  --seat-select: #ff6b5e;
+
+  --temp-none-bg: #232b39;
+  --temp-none-text: #8b97a8;
+  --temp-none-border: #33405a;
+  --temp-cold-bg: #14263f;
+  --temp-cold-text: #7fb0ff;
+  --temp-cold-border: #2f5488;
+  --temp-ok-bg: #10331f;
+  --temp-ok-text: #6fdca0;
+  --temp-ok-border: #2e7d52;
+  --temp-hot-bg: #3a1e1e;
+  --temp-hot-text: #ff7a70;
+  --temp-hot-border: #7a3a34;
+  --temp-mine: #7fb0ff;
+  --temp-mine-ring: 0 0 0 3px rgba(127, 176, 255, 0.22);
+}
+
+/* テーマ切り替え時のちらつきを抑える。動きを減らす設定は尊重する */
+@media (prefers-reduced-motion: no-preference) {
+  body {
+    transition: background-color 0.2s ease, color 0.2s ease;
+  }
+}

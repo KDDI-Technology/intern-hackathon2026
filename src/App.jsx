@@ -1,9 +1,11 @@
 import { useState } from "react";
-import { Users, Armchair, Camera as CameraIcon, LogOut, UserRound } from "lucide-react";
+import { Users, Armchair, Camera as CameraIcon, House, LogOut, Moon, Sun, UserRound, Utensils } from "lucide-react";
 import "./App.css";
+import { useTheme } from "./useTheme";
 import Camera from "./components/Camera";
 import OgoriPair from "./components/OgoriPair";
 import SeatAndTemperature from "./components/SeatAndTemperature";
+import LunchSupport from "./components/LunchSupport";
 
 const APPS = [
   {
@@ -11,24 +13,36 @@ const APPS = [
     label: "おごりペア",
     sub: "社内ランチマッチング",
     icon: Users,
-    accent: "#F5A524",
-    accentSoft: "#FDF0DA",
+    accent: "var(--app-ogori-accent)",
+    accentSoft: "var(--app-ogori-soft)",
+    gradient: "linear-gradient(135deg, #f4a11c 0%, #ef7d22 100%)",
+  },
+  {
+    id: "lunch",
+    label: "ランチサポート",
+    sub: "みんなでランチ募集",
+    icon: Utensils,
+    accent: "var(--app-lunch-accent)",
+    accentSoft: "var(--app-lunch-soft)",
+    gradient: "linear-gradient(135deg, #f03c98 0%, #d52b71 100%)",
   },
   {
     id: "seat",
     label: "座席・温度",
     sub: "空席状況と室温の記録",
     icon: Armchair,
-    accent: "#16a34a",
-    accentSoft: "#DCFCE7",
+    accent: "var(--app-seat-accent)",
+    accentSoft: "var(--app-seat-soft)",
+    gradient: "linear-gradient(135deg, #22c55e 0%, #0f9f69 100%)",
   },
   {
     id: "camera",
     label: "在庫確認",
     sub: "お菓子コーナーの様子",
     icon: CameraIcon,
-    accent: "#222222",
-    accentSoft: "#E7E5E4",
+    accent: "var(--app-camera-accent)",
+    accentSoft: "var(--app-camera-soft)",
+    gradient: "linear-gradient(135deg, #6554e8 0%, #4433c7 100%)",
   },
 ];
 
@@ -58,7 +72,22 @@ function readUsers() {
   }
 }
 
-function AuthScreen({ onLogin }) {
+function ThemeToggle({ theme, onToggle }) {
+  const toDark = theme === "light";
+  return (
+    <button
+      type="button"
+      className="theme-toggle"
+      onClick={onToggle}
+      aria-label={toDark ? "ダークモードに切り替える" : "ライトモードに切り替える"}
+      title={toDark ? "ダークモードに切り替える" : "ライトモードに切り替える"}
+    >
+      {toDark ? <Moon size={16} aria-hidden="true" /> : <Sun size={16} aria-hidden="true" />}
+    </button>
+  );
+}
+
+function AuthScreen({ onLogin, theme, onToggleTheme }) {
   const [mode, setMode] = useState("login");
   const [name, setName] = useState("");
   const [email, setEmail] = useState(mode === "login" ? DEMO_USER.email : "");
@@ -107,7 +136,10 @@ function AuthScreen({ onLogin }) {
   return (
     <main className="auth-page">
       <section className="auth-card">
-        <div className="auth-mark"><UserRound size={25} aria-hidden="true" /></div>
+        <div className="auth-head">
+          <div className="auth-mark"><UserRound size={25} aria-hidden="true" /></div>
+          <ThemeToggle theme={theme} onToggle={onToggleTheme} />
+        </div>
         <p className="auth-eyebrow">OFFICE CONSOLE</p>
         <h1>オフィスハブ</h1>
         <p className="auth-description">社内サービスを利用するにはログインしてください。</p>
@@ -133,8 +165,44 @@ function AuthScreen({ onLogin }) {
   );
 }
 
+function HomeScreen({ currentUser, onOpen }) {
+  const firstName = currentUser.name?.trim().split(/[\s　]+/)[0] || "利用者";
+
+  return (
+    <section className="home-screen" aria-labelledby="home-title">
+      <div className="home-intro">
+        <p className="home-eyebrow">OFFICE SERVICES</p>
+        <h2 id="home-title">{firstName}さん、こんにちは</h2>
+        <p>利用するサービスを選んでください。</p>
+      </div>
+
+      <div className="home-grid">
+        {APPS.map((app) => {
+          const Icon = app.icon;
+          return (
+            <button
+              key={app.id}
+              type="button"
+              className="home-service-card"
+              style={{ background: app.gradient }}
+              onClick={() => onOpen(app.id)}
+            >
+              <span className="home-service-icon"><Icon size={34} aria-hidden="true" /></span>
+              <span className="home-service-copy">
+                <strong>{app.label}</strong>
+                <small>{app.sub}</small>
+              </span>
+            </button>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
 function App() {
-  const [active, setActive] = useState("ogori");
+  const { theme, toggleTheme } = useTheme();
+  const [active, setActive] = useState("home");
   const [currentUser, setCurrentUser] = useState(() => {
     readUsers();
     try {
@@ -149,7 +217,7 @@ function App() {
   });
   const activeApp = APPS.find((a) => a.id === active);
 
-  if (!currentUser) return <AuthScreen onLogin={setCurrentUser} />;
+  if (!currentUser) return <AuthScreen onLogin={setCurrentUser} theme={theme} onToggleTheme={toggleTheme} />;
 
   const logout = () => {
     localStorage.removeItem(SESSION_KEY);
@@ -161,15 +229,19 @@ function App() {
       <header className="app-header">
         <div>
           <h1>オフィスハブ</h1>
-          <p className="app-header-sub">{activeApp.sub}</p>
+          <p className="app-header-sub">{activeApp?.sub || "社内サービスホーム"}</p>
         </div>
         <div className="user-menu">
           <span>{currentUser.name}</span>
+          <ThemeToggle theme={theme} onToggle={toggleTheme} />
+          {active !== "home" && (
+            <button type="button" onClick={() => setActive("home")} aria-label="ホームへ戻る"><House size={16} /></button>
+          )}
           <button type="button" onClick={logout} aria-label="ログアウト"><LogOut size={16} /></button>
         </div>
       </header>
 
-      <nav className="app-nav">
+      {active !== "home" && <nav className="app-nav">
         {APPS.map((app) => {
           const Icon = app.icon;
           const isActive = app.id === active;
@@ -179,15 +251,15 @@ function App() {
               className="app-nav-btn"
               onClick={() => setActive(app.id)}
               style={{
-                background: isActive ? app.accentSoft : "#ffffff",
-                borderColor: isActive ? app.accent : "#e1e4e8",
+                background: isActive ? app.accentSoft : "var(--surface)",
+                borderColor: isActive ? app.accent : "var(--border)",
               }}
             >
               <span
                 className="app-nav-icon"
                 style={{
-                  background: isActive ? app.accent : "#f0f1f3",
-                  color: isActive ? "#ffffff" : "#6e7887",
+                  background: isActive ? app.accent : "var(--surface-2)",
+                  color: isActive ? "var(--app-on-accent)" : "var(--text-muted)",
                 }}
               >
                 <Icon size={18} aria-hidden="true" />
@@ -196,7 +268,7 @@ function App() {
                 className="app-nav-label"
                 style={{
                   fontWeight: isActive ? 700 : 500,
-                  color: isActive ? "#141a24" : "#6e7887",
+                  color: isActive ? "var(--text)" : "var(--text-muted)",
                 }}
               >
                 {app.label}
@@ -204,15 +276,17 @@ function App() {
             </button>
           );
         })}
-      </nav>
+      </nav>}
 
       <div className="app-body">
+        {active === "home" && <HomeScreen currentUser={currentUser} onOpen={setActive} />}
         {active === "ogori" && <OgoriPair currentUser={currentUser} />}
         {active === "seat" && (
           <div className="app-card">
             <SeatAndTemperature currentUser={currentUser} />
           </div>
         )}
+        {active === "lunch" && <LunchSupport currentUser={currentUser} />}
         {active === "camera" && <Camera />}
       </div>
     </main>

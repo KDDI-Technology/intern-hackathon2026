@@ -4,7 +4,22 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="light dark" />
     <title>raspi-app</title>
+    <script>
+      // 初回描画の前に data-theme を確定させ、ライト画面の一瞬のちらつきを防ぐ
+      (function () {
+        try {
+          var saved = localStorage.getItem("office-hub:theme");
+          if (saved !== "light" && saved !== "dark") {
+            saved = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+          }
+          document.documentElement.dataset.theme = saved;
+        } catch (e) {
+          document.documentElement.dataset.theme = "light";
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

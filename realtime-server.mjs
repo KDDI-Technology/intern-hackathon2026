@@ -13,6 +13,9 @@ const SEAT_DATA_FILE = new URL("./seat-data.json", import.meta.url);
 const emptySeats = () => Object.fromEntries(seatIds.map((id) => [id, false]));
 let seats = emptySeats();
 let seatsInitialized = false;
+const LUNCH_DATA_FILE = new URL("./lunch-data.json", import.meta.url);
+let lunchPosts = [];
+let lunchInitialized = false;
 
 try {
   const saved = JSON.parse(readFileSync(SEAT_DATA_FILE, "utf8"));
@@ -25,6 +28,19 @@ try {
 function saveSeats() {
   writeFileSync(SEAT_DATA_FILE, JSON.stringify({ initialized: true, seats }, null, 2));
   seatsInitialized = true;
+}
+
+try {
+  const saved = JSON.parse(readFileSync(LUNCH_DATA_FILE, "utf8"));
+  lunchPosts = Array.isArray(saved.posts) ? saved.posts : [];
+  lunchInitialized = Boolean(saved.initialized);
+} catch {
+  // 初回起動時は最初のクライアントの掲示板データを受け入れる
+}
+
+function saveLunchPosts() {
+  writeFileSync(LUNCH_DATA_FILE, JSON.stringify({ initialized: true, posts: lunchPosts }, null, 2));
+  lunchInitialized = true;
 }
 
 function cors(res) {
@@ -64,6 +80,7 @@ const server = http.createServer((req, res) => {
     clients.get(channel).add(res);
 
     if (channel === "seats") sendSse(res, { t: "snapshot", seats, initialized: seatsInitialized });
+    if (channel === "lunch-support") sendSse(res, { t: "snapshot", posts: lunchPosts, initialized: lunchInitialized });
 
     req.on("close", () => {
       clients.get(channel)?.delete(res);
@@ -96,6 +113,18 @@ const server = http.createServer((req, res) => {
             for (const id of seatIds) seats[id] = payload.seats[id] || false;
             saveSeats();
             broadcast("seats", { t: "snapshot", seats, initialized: true });
+          }
+        } else if (channel === "lunch-support") {
+          if (payload?.t === "get") {
+            broadcast("lunch-support", { t: "snapshot", posts: lunchPosts, initialized: lunchInitialized });
+          } else if (payload?.t === "replace" && Array.isArray(payload.posts)) {
+            lunchPosts = payload.posts.slice(0, 200);
+            saveLunchPosts();
+            broadcast("lunch-support", { t: "snapshot", posts: lunchPosts, initialized: true });
+          } else if (payload?.t === "init" && !lunchInitialized && Array.isArray(payload.posts)) {
+            lunchPosts = payload.posts.slice(0, 200);
+            saveLunchPosts();
+            broadcast("lunch-support", { t: "snapshot", posts: lunchPosts, initialized: true });
           }
         } else if (channel === "ogori") {
           broadcast("ogori", payload);

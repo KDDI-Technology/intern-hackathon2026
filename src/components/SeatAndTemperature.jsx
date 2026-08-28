@@ -73,12 +73,12 @@ const DEFAULT_TEMPS = {
 
 function tempColor(value) {
   if (value === undefined || value === null || value === "") {
-    return { bg: "#f5f4f2", text: "#a8a29e", border: "#d6d3d1" };
+    return { bg: "var(--temp-none-bg)", text: "var(--temp-none-text)", border: "var(--temp-none-border)" };
   }
   const v = Number(value);
-  if (v < 21) return { bg: "#dbeafe", text: "#2563eb", border: "#93c5fd" };
-  if (v < 26) return { bg: "#dcfce7", text: "#16a34a", border: "#86efac" };
-  return { bg: "#fee2e2", text: "#dc2626", border: "#fca5a5" };
+  if (v < 21) return { bg: "var(--temp-cold-bg)", text: "var(--temp-cold-text)", border: "var(--temp-cold-border)" };
+  if (v < 26) return { bg: "var(--temp-ok-bg)", text: "var(--temp-ok-text)", border: "var(--temp-ok-border)" };
+  return { bg: "var(--temp-hot-bg)", text: "var(--temp-hot-text)", border: "var(--temp-hot-border)" };
 }
 
 function SeatsView({ currentUser }) {
@@ -165,7 +165,7 @@ function SeatsView({ currentUser }) {
   const availableCount = total - occupiedCount;
 
   if (!loaded) {
-    return <div style={{ padding: "2rem 0", color: "#57534e", fontSize: 14 }}>読み込み中…</div>;
+    return <div style={{ padding: "2rem 0", color: "var(--seat-text)", fontSize: 14 }}>読み込み中…</div>;
   }
 
   let rowIndex = 0;
@@ -183,17 +183,17 @@ function SeatsView({ currentUser }) {
         }}
       >
         <div style={{ display: "flex", gap: 8 }}>
-          <div style={{ background: "#f5f4f2", borderRadius: "8px", padding: "0.5rem 0.875rem", minWidth: 76, textAlign: "center" }}>
-            <p style={{ fontSize: 12, color: "#57534e", margin: 0 }}>空席</p>
+          <div style={{ background: "var(--seat-panel)", borderRadius: "8px", padding: "0.5rem 0.875rem", minWidth: 76, textAlign: "center" }}>
+            <p style={{ fontSize: 12, color: "var(--seat-text)", margin: 0 }}>空席</p>
             <p style={{ fontSize: 20, fontWeight: 500, margin: 0 }}>{availableCount}</p>
           </div>
-          <div style={{ background: "#f5f4f2", borderRadius: "8px", padding: "0.5rem 0.875rem", minWidth: 76, textAlign: "center" }}>
-            <p style={{ fontSize: 12, color: "#57534e", margin: 0 }}>着席</p>
+          <div style={{ background: "var(--seat-panel)", borderRadius: "8px", padding: "0.5rem 0.875rem", minWidth: 76, textAlign: "center" }}>
+            <p style={{ fontSize: 12, color: "var(--seat-text)", margin: 0 }}>着席</p>
             <p style={{ fontSize: 20, fontWeight: 500, margin: 0 }}>{occupiedCount}</p>
           </div>
         </div>
         <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-          {saving && <span style={{ fontSize: 12, color: "#a8a29e" }}>保存中…</span>}
+          {saving && <span style={{ fontSize: 12, color: "var(--seat-subtle)" }}>保存中…</span>}
           <button onClick={clearAll} style={{ fontSize: 13 }}>
             <i className="ti ti-refresh" aria-hidden="true" style={{ fontSize: 16, verticalAlign: -3, marginRight: 4 }}></i>
             全部空席にする
@@ -204,7 +204,7 @@ function SeatsView({ currentUser }) {
       {selectedSeat ? (
         <div
           style={{
-            background: "#f5f4f2",
+            background: "var(--seat-panel)",
             borderRadius: 12,
             padding: "2.5rem 1.25rem",
             display: "flex",
@@ -220,7 +220,7 @@ function SeatsView({ currentUser }) {
               width: 64,
               height: 64,
               borderRadius: "50%",
-              background: "#ffffff",
+              background: "var(--seat-cell)",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
@@ -230,7 +230,7 @@ function SeatsView({ currentUser }) {
           >
             {SEAT_IDS.indexOf(selectedSeat) + 1}
           </div>
-          <span style={{ fontSize: 14, color: "#57534e" }}>
+          <span style={{ fontSize: 14, color: "var(--seat-text)" }}>
             {SEAT_IDS.indexOf(selectedSeat) + 1}番の状態を選択
           </span>
           <div style={{ display: "flex", gap: 10 }}>
@@ -239,9 +239,9 @@ function SeatsView({ currentUser }) {
               style={{
                 fontSize: 14,
                 fontWeight: 500,
-                color: "#57534e",
-                background: "#ffffff",
-                border: "2px solid #a8a29e",
+                color: "var(--seat-text)",
+                background: "var(--seat-cell)",
+                border: "2px solid var(--seat-subtle)",
                 borderRadius: 8,
                 padding: "0.6rem 1.1rem",
               }}
@@ -253,9 +253,9 @@ function SeatsView({ currentUser }) {
               style={{
                 fontSize: 14,
                 fontWeight: 500,
-                color: "#dc2626",
-                background: "#fee2e2",
-                border: "2px solid #dc2626",
+                color: "var(--seat-occupied-text)",
+                background: "var(--seat-occupied-bg)",
+                border: "2px solid var(--seat-occupied-text)",
                 borderRadius: 8,
                 padding: "0.6rem 1.1rem",
               }}
@@ -269,9 +269,9 @@ function SeatsView({ currentUser }) {
             style={{
               fontSize: 13,
               fontWeight: 500,
-              color: "#57534e",
-              background: "#ffffff",
-              border: "2px solid #d6d3d1",
+              color: "var(--seat-text)",
+              background: "var(--seat-cell)",
+              border: "2px solid var(--seat-line)",
               borderRadius: 8,
               padding: "0.5rem 1rem",
             }}
@@ -282,7 +282,7 @@ function SeatsView({ currentUser }) {
       ) : (
         <div
           style={{
-            background: "#f5f4f2",
+            background: "var(--seat-panel)",
             borderRadius: 12,
             padding: "2rem",
             display: "flex",
@@ -297,8 +297,8 @@ function SeatsView({ currentUser }) {
               textAlign: "center",
               fontSize: 17,
               fontWeight: 500,
-              color: "#57534e",
-              borderBottom: "0.5px solid #e7e5e4",
+              color: "var(--seat-text)",
+              borderBottom: "0.5px solid var(--seat-line-soft)",
               paddingBottom: 12,
               marginBottom: 18,
             }}
@@ -310,7 +310,7 @@ function SeatsView({ currentUser }) {
             {LAYOUT.map((block, blockIdx) => {
               if (block.type === "aisle") {
                 return (
-                  <div key={`aisle-${blockIdx}`} style={{ textAlign: "center", fontSize: 17, fontWeight: 500, color: "#57534e", padding: "2px 0" }}>
+                  <div key={`aisle-${blockIdx}`} style={{ textAlign: "center", fontSize: 17, fontWeight: 500, color: "var(--seat-text)", padding: "2px 0" }}>
                     通路
                   </div>
                 );
@@ -323,7 +323,7 @@ function SeatsView({ currentUser }) {
                   style={{
                     display: "flex",
                     justifyContent: "center",
-                    border: "0.5px solid #d6d3d1",
+                    border: "0.5px solid var(--seat-line)",
                     borderRadius: 8,
                     overflow: "hidden",
                     width: "fit-content",
@@ -347,15 +347,15 @@ function SeatsView({ currentUser }) {
                           height: 56,
                           padding: 0,
                           borderRadius: 0,
-                          border: isSelected ? "2px solid #ef4444" : "none",
+                          border: isSelected ? "2px solid var(--seat-select)" : "none",
                           borderRight:
                             !isSelected && seatIdx < block.count - 1
-                              ? "0.5px solid #d6d3d1"
+                              ? "0.5px solid var(--seat-line)"
                               : isSelected
-                              ? "2px solid #ef4444"
+                              ? "2px solid var(--seat-select)"
                               : "none",
-                          background: isOccupied ? "#fee2e2" : "#ffffff",
-                          color: isOccupied ? "#dc2626" : "#57534e",
+                          background: isOccupied ? "var(--seat-occupied-bg)" : "var(--seat-cell)",
+                          color: isOccupied ? "var(--seat-occupied-text)" : "var(--seat-text)",
                           display: "flex",
                           flexDirection: "column",
                           alignItems: "center",
@@ -369,15 +369,15 @@ function SeatsView({ currentUser }) {
                         onMouseUp={(e) => (e.currentTarget.style.transform = "scale(1)")}
                         onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
                       >
-                        <span style={{ fontSize: 17, fontWeight: 500, color: isOccupied ? "#dc2626" : "#57534e" }}>
+                        <span style={{ fontSize: 17, fontWeight: 500, color: isOccupied ? "var(--seat-occupied-text)" : "var(--seat-text)" }}>
                           {seatNumber}
                         </span>
                         {isOccupied ? (
-                          <span style={{ fontSize: 10, fontWeight: 700, lineHeight: 1.1, color: "#dc2626" }}>
+                          <span style={{ fontSize: 10, fontWeight: 700, lineHeight: 1.1, color: "var(--seat-occupied-text)" }}>
                             {occupantSurname || "使用中"}
                           </span>
                         ) : (
-                          <i className="ti ti-armchair-2" aria-hidden="true" style={{ fontSize: 15, color: "#57534e" }}></i>
+                          <i className="ti ti-armchair-2" aria-hidden="true" style={{ fontSize: 15, color: "var(--seat-text)" }}></i>
                         )}
                       </button>
                     );
@@ -389,7 +389,7 @@ function SeatsView({ currentUser }) {
         </div>
       )}
 
-      <p style={{ fontSize: 12, color: "#a8a29e", marginTop: 12, textAlign: "center" }}>
+      <p style={{ fontSize: 12, color: "var(--seat-subtle)", marginTop: 12, textAlign: "center" }}>
         席をタップして、空席と着席を切り替えられます。
       </p>
     </div>
@@ -421,7 +421,7 @@ function TemperatureView({ currentUser }) {
   }, []);
 
   if (!loaded) {
-    return <div style={{ padding: "2rem 0", color: "#57534e", fontSize: 14 }}>読み込み中…</div>;
+    return <div style={{ padding: "2rem 0", color: "var(--seat-text)", fontSize: 14 }}>読み込み中…</div>;
   }
 
   let rowIndex = 0;
@@ -437,26 +437,26 @@ function TemperatureView({ currentUser }) {
           gap: 16,
           marginBottom: "1.25rem",
           fontSize: 12,
-          color: "#57534e",
+          color: "var(--seat-text)",
         }}
       >
         <span>
-          <span style={{ display: "inline-block", width: 10, height: 10, borderRadius: 3, background: "#dbeafe", border: "1px solid #93c5fd", marginRight: 4, verticalAlign: -1 }}></span>
+          <span style={{ display: "inline-block", width: 10, height: 10, borderRadius: 3, background: "var(--temp-cold-bg)", border: "1px solid var(--temp-cold-border)", marginRight: 4, verticalAlign: -1 }}></span>
           21°C未満
         </span>
         <span>
-          <span style={{ display: "inline-block", width: 10, height: 10, borderRadius: 3, background: "#dcfce7", border: "1px solid #86efac", marginRight: 4, verticalAlign: -1 }}></span>
+          <span style={{ display: "inline-block", width: 10, height: 10, borderRadius: 3, background: "var(--temp-ok-bg)", border: "1px solid var(--temp-ok-border)", marginRight: 4, verticalAlign: -1 }}></span>
           21〜25.9°C
         </span>
         <span>
-          <span style={{ display: "inline-block", width: 10, height: 10, borderRadius: 3, background: "#fee2e2", border: "1px solid #fca5a5", marginRight: 4, verticalAlign: -1 }}></span>
+          <span style={{ display: "inline-block", width: 10, height: 10, borderRadius: 3, background: "var(--temp-hot-bg)", border: "1px solid var(--temp-hot-border)", marginRight: 4, verticalAlign: -1 }}></span>
           26°C以上
         </span>
       </div>
 
       <div
         style={{
-          background: "#f5f4f2",
+          background: "var(--seat-panel)",
           borderRadius: 12,
           padding: "2rem",
           display: "flex",
@@ -471,8 +471,8 @@ function TemperatureView({ currentUser }) {
             textAlign: "center",
             fontSize: 17,
             fontWeight: 500,
-            color: "#57534e",
-            borderBottom: "0.5px solid #e7e5e4",
+            color: "var(--seat-text)",
+            borderBottom: "0.5px solid var(--seat-line-soft)",
             paddingBottom: 12,
             marginBottom: 18,
           }}
@@ -484,7 +484,7 @@ function TemperatureView({ currentUser }) {
           {LAYOUT.map((block, blockIdx) => {
             if (block.type === "aisle") {
               return (
-                <div key={`aisle-${blockIdx}`} style={{ textAlign: "center", fontSize: 17, fontWeight: 500, color: "#57534e", padding: "2px 0" }}>
+                <div key={`aisle-${blockIdx}`} style={{ textAlign: "center", fontSize: 17, fontWeight: 500, color: "var(--seat-text)", padding: "2px 0" }}>
                   通路
                 </div>
               );
@@ -518,8 +518,8 @@ function TemperatureView({ currentUser }) {
                         width: 112,
                         height: 56,
                         borderRadius: 8,
-                        border: isMySeat ? "3px solid #2563eb" : "0.5px solid #d6d3d1",
-                        boxShadow: isMySeat ? "0 0 0 3px rgba(37, 99, 235, 0.14)" : "none",
+                        border: isMySeat ? "3px solid var(--temp-mine)" : "0.5px solid var(--seat-line)",
+                        boxShadow: isMySeat ? "var(--temp-mine-ring)" : "none",
                         background: colors.bg,
                         color: colors.text,
                         display: "flex",
@@ -543,7 +543,7 @@ function TemperatureView({ currentUser }) {
         </div>
       </div>
 
-      <p style={{ fontSize: 12, color: "#a8a29e", marginTop: 12, textAlign: "center" }}>
+      <p style={{ fontSize: 12, color: "var(--seat-subtle)", marginTop: 12, textAlign: "center" }}>
         温度は自動で記録されたものを表示しています(閲覧専用)。
       </p>
     </div>
@@ -562,8 +562,8 @@ export default function SeatAndTemperatureApp({ currentUser }) {
           left: 0,
           right: 0,
           display: "flex",
-          background: "#ffffff",
-          border: "0.5px solid #e7e5e4",
+          background: "var(--seat-tabbar)",
+          border: "0.5px solid var(--seat-line-soft)",
           borderRadius: 12,
           overflow: "hidden",
           marginBottom: "1.5rem",
@@ -578,8 +578,8 @@ export default function SeatAndTemperatureApp({ currentUser }) {
             padding: "0.75rem",
             fontSize: 14,
             fontWeight: activeTab === "seats" ? 500 : 400,
-            background: activeTab === "seats" ? "#f5f4f2" : "#ffffff",
-            color: activeTab === "seats" ? "#1c1917" : "#a8a29e",
+            background: activeTab === "seats" ? "var(--seat-tab-active)" : "var(--seat-tabbar)",
+            color: activeTab === "seats" ? "var(--seat-strong)" : "var(--seat-subtle)",
           }}
         >
           <i className="ti ti-armchair-2" aria-hidden="true" style={{ fontSize: 16, verticalAlign: -3, marginRight: 6 }}></i>
@@ -594,9 +594,9 @@ export default function SeatAndTemperatureApp({ currentUser }) {
             padding: "0.75rem",
             fontSize: 14,
             fontWeight: activeTab === "temp" ? 500 : 400,
-            background: activeTab === "temp" ? "#f5f4f2" : "#ffffff",
-            color: activeTab === "temp" ? "#1c1917" : "#a8a29e",
-            borderLeft: "0.5px solid #e7e5e4",
+            background: activeTab === "temp" ? "var(--seat-tab-active)" : "var(--seat-tabbar)",
+            color: activeTab === "temp" ? "var(--seat-strong)" : "var(--seat-subtle)",
+            borderLeft: "0.5px solid var(--seat-line-soft)",
           }}
         >
           <i className="ti ti-temperature" aria-hidden="true" style={{ fontSize: 16, verticalAlign: -3, marginRight: 6 }}></i>

@@ -42,19 +42,31 @@ const MEET_LIMIT = 420; // マッチ後、集合までの目安（秒）
 const SPOT = "3F 入り口付近の自販機";
 const CHANNEL = "ogori-pair";
 
+// 実際の色は src/theme.css の :root / [data-theme="dark"] が持つ。
+// ここは参照名を並べるだけで、ライト・ダークの分岐はしない。
 const C = {
-  page: "#E4E7EA",
-  chassis: "#18212F",
-  chassisSoft: "#232F44",
-  line: "#33415A",
-  led: "#F5A524",
-  lamp: "#2ECC71",
-  lampOff: "#4A5A73",
-  red: "#E5544B",
-  paper: "#FBFBFA",
-  ink: "#141A24",
-  mute: "#8C9BB2",
-  paperMute: "#6E7887",
+  page: "var(--og-page)",
+  chassis: "var(--og-chassis)",
+  chassisSoft: "var(--og-chassis-soft)",
+  line: "var(--og-line)",
+  led: "var(--og-led)",
+  lamp: "var(--og-lamp)",
+  lampOff: "var(--og-lamp-off)",
+  red: "var(--og-red)",
+  paper: "var(--og-paper)",
+  paper2: "var(--og-paper-2)",
+  chip: "var(--og-chip-bg)",
+  chipText: "var(--og-chip-text)",
+  paperLine: "var(--og-paper-line)",
+  paperLine2: "var(--og-paper-line-2)",
+  ink: "var(--og-ink)",
+  mute: "var(--og-mute)",
+  paperMute: "var(--og-paper-mute)",
+  ok: "var(--og-ok)",
+  warn: "var(--og-warn)",
+  alert: "var(--og-alert)",
+  onLamp: "var(--og-on-lamp)",
+  fieldBorder: "var(--og-field-border)",
 };
 
 const MONO = "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace";
@@ -67,7 +79,7 @@ const SEED = [
 ];
 
 const RESULT_LABEL = { joined: "合流", unconfirmed: "未確認", noshow: "不成立" };
-const RESULT_COLOR = { joined: "#1B7F4D", unconfirmed: "#A66A00", noshow: C.red };
+const RESULT_COLOR = { joined: C.ok, unconfirmed: C.warn, noshow: C.red };
 
 const mmss = (s) => {
   const v = Math.max(0, Math.ceil(s));
@@ -540,7 +552,7 @@ export default function OgoriPair({ currentUser }) {
 
           <div className="rounded-2xl p-5 mb-4" style={{ background: C.paper }}>
             <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 8 }}>この端末の利用者</div>
-            <div className="w-full rounded-lg px-3 py-2" style={{ fontSize: 15, fontWeight: 600, background: "#F1F1ED", border: "1px solid #C6CBD1", color: C.ink }}>
+            <div className="w-full rounded-lg px-3 py-2" style={{ fontSize: 15, fontWeight: 600, background: C.paper2, border: "1px solid " + C.fieldBorder, color: C.ink }}>
               {me.name}（{me.dept}）
             </div>
             <p className="mt-2" style={{ fontSize: 12, color: C.paperMute, lineHeight: 1.7 }}>
@@ -554,7 +566,7 @@ export default function OgoriPair({ currentUser }) {
                 type="checkbox"
                 checked={agreed}
                 onChange={(e) => setAgreed(e.target.checked)}
-                style={{ width: 18, height: 18, marginTop: 2, accentColor: "#1B7F4D" }}
+                style={{ width: 18, height: 18, marginTop: 2, accentColor: "var(--og-ok)" }}
               />
               <span style={{ fontSize: 13, lineHeight: 1.7 }}>
                 参加は任意です。マッチの履歴は本人だけが見られ、管理者に渡るのは人数や割合などの集計値だけです。
@@ -564,13 +576,13 @@ export default function OgoriPair({ currentUser }) {
               <button
                 onClick={askNotify}
                 className="btn mt-4 w-full py-2 rounded-lg"
-                style={{ background: "#EDEDE9", color: "#3F4650", fontSize: 13, fontWeight: 600 }}
+                style={{ background: C.chip, color: C.chipText, fontSize: 13, fontWeight: 600 }}
               >
                 通知を許可する（相手が見つかったら知らせます）
               </button>
             )}
             {notifyPerm === "granted" && (
-              <p className="mt-4" style={{ fontSize: 12, color: "#1B7F4D" }}>通知はオンになっています。</p>
+              <p className="mt-4" style={{ fontSize: 12, color: C.ok }}>通知はオンになっています。</p>
             )}
           </div>
 
@@ -579,8 +591,8 @@ export default function OgoriPair({ currentUser }) {
             disabled={!agreed}
             className="btn w-full py-4 rounded-xl transition-transform active:scale-95"
             style={{
-              background: agreed ? C.lamp : "#C8CDD3",
-              color: agreed ? "#08301C" : "#8C9BB2",
+              background: agreed ? C.lamp : "var(--og-disabled-bg)",
+              color: agreed ? C.onLamp : "var(--og-disabled-text)",
               fontSize: 17,
               fontWeight: 700,
               cursor: agreed ? "pointer" : "not-allowed",
@@ -607,7 +619,7 @@ export default function OgoriPair({ currentUser }) {
             <div style={{ fontSize: 11, color: C.paperMute, marginBottom: 3 }}>この端末の利用者</div>
             <div
               className="inline-block rounded-lg px-3 py-1"
-              style={{ fontSize: 13, fontWeight: 600, background: C.paper, border: "1px solid #C6CBD1" }}
+              style={{ fontSize: 13, fontWeight: 600, background: C.paper, border: "1px solid " + C.fieldBorder, color: C.ink }}
             >
               {me.name}（{me.dept}）
             </div>
@@ -616,14 +628,14 @@ export default function OgoriPair({ currentUser }) {
 
         <div
           className="flex items-center gap-2 mb-4 px-3 py-2 rounded-lg"
-          style={{ background: soloMode ? "#DDE1E6" : "#D6EFE0", fontSize: 12, color: soloMode ? C.paperMute : "#186B45" }}
+          style={{ background: soloMode ? "var(--og-solo-bg)" : "var(--og-live-bg)", fontSize: 12, color: soloMode ? C.paperMute : "var(--og-live-text)" }}
         >
           <span
             style={{
               width: 7,
               height: 7,
               borderRadius: 999,
-              background: soloMode ? "#9AA3AD" : "#1FA85C",
+              background: soloMode ? "var(--og-solo-dot)" : "var(--og-live-dot)",
               display: "inline-block",
             }}
           />
@@ -632,7 +644,7 @@ export default function OgoriPair({ currentUser }) {
             : "他のタブ " + livePeers.length + "件と接続中 — 実際にマッチできます"}
         </div>
 
-        <div className="flex gap-1 p-1 mb-4 rounded-xl" style={{ background: "#D5D9DE" }}>
+        <div className="flex gap-1 p-1 mb-4 rounded-xl" style={{ background: "var(--og-tabs-bg)" }}>
           <Tab id="wait" label="待機" />
           <Tab id="hist" label="履歴" />
           <Tab id="stat" label="計測" />
@@ -681,7 +693,7 @@ export default function OgoriPair({ currentUser }) {
                         height: 196,
                         background: C.lamp,
                         border: "none",
-                        color: "#06331C",
+                        color: C.onLamp,
                         fontSize: 26,
                         fontWeight: 800,
                         letterSpacing: "0.02em",
@@ -812,7 +824,7 @@ export default function OgoriPair({ currentUser }) {
                       この人が選ばれた理由：{match.reasons.join("、")}
                     </div>
 
-                    <div className="mt-4 pt-4" style={{ borderTop: "1px solid #E4E4E1" }}>
+                    <div className="mt-4 pt-4" style={{ borderTop: "1px solid " + C.paperLine }}>
                       <div className="flex items-baseline justify-between">
                         <div>
                           <div style={{ fontSize: 12, color: C.paperMute }}>集合場所</div>
@@ -835,7 +847,7 @@ export default function OgoriPair({ currentUser }) {
                       </div>
                     </div>
 
-                    <div className="mt-4 pt-4" style={{ borderTop: "1px solid #E4E4E1" }}>
+                    <div className="mt-4 pt-4" style={{ borderTop: "1px solid " + C.paperLine }}>
                       <Row
                         label="あなた"
                         value={iConfirmed ? "合流を記録しました" : iHeading ? "向かっています" : "まだ動いていません"}
@@ -867,7 +879,7 @@ export default function OgoriPair({ currentUser }) {
                       <button
                         onClick={confirmJoin}
                         className="btn flex-1 py-3 rounded-xl"
-                        style={{ background: C.lamp, color: "#06331C", fontSize: 15, fontWeight: 700 }}
+                        style={{ background: C.lamp, color: C.onLamp, fontSize: 15, fontWeight: 700 }}
                       >
                         合流した
                       </button>
@@ -908,7 +920,7 @@ export default function OgoriPair({ currentUser }) {
                   <button
                     onClick={join}
                     className="btn mt-6 px-6 py-3 rounded-xl"
-                    style={{ background: C.lamp, color: "#06331C", fontSize: 15, fontWeight: 700 }}
+                    style={{ background: C.lamp, color: C.onLamp, fontSize: 15, fontWeight: 700 }}
                   >
                     もう一度待つ
                   </button>
@@ -940,10 +952,10 @@ export default function OgoriPair({ currentUser }) {
             ) : (
               <div className="flex flex-col">
                 {history.map((h, i) => (
-                  <div key={i} className="flex items-center gap-3 py-3" style={{ borderTop: i === 0 ? "none" : "1px solid #EAEAE6" }}>
+                  <div key={i} className="flex items-center gap-3 py-3" style={{ borderTop: i === 0 ? "none" : "1px solid " + C.paperLine2 }}>
                     <div
                       className="flex items-center justify-center rounded-full shrink-0"
-                      style={{ width: 38, height: 38, background: "#EDEDE9", fontSize: 15, fontWeight: 700 }}
+                      style={{ width: 38, height: 38, background: C.chip, color: C.ink, fontSize: 15, fontWeight: 700 }}
                     >
                       {h.name.slice(0, 1)}
                     </div>
@@ -988,7 +1000,7 @@ export default function OgoriPair({ currentUser }) {
           </div>
         )}
 
-        <div className="mt-5 rounded-xl p-4" style={{ border: "1px dashed #AFB6BE" }}>
+        <div className="mt-5 rounded-xl p-4" style={{ border: "1px dashed var(--og-dashed)" }}>
           <div style={{ fontSize: 11, letterSpacing: "0.14em", color: C.paperMute, marginBottom: 10 }}>
             デモ操作（本番にはありません）
           </div>
@@ -1068,7 +1080,7 @@ function Row({ label, value, done }) {
   return (
     <div className="flex items-center justify-between py-1">
       <span style={{ fontSize: 13, color: C.paperMute }}>{label}</span>
-      <span style={{ fontSize: 13, fontWeight: 600, color: done ? "#1B7F4D" : "#3F4650" }}>
+      <span style={{ fontSize: 13, fontWeight: 600, color: done ? C.ok : C.chipText }}>
         {done ? "✓ " : ""}
         {value}
       </span>
@@ -1078,7 +1090,7 @@ function Row({ label, value, done }) {
 
 function Badge({ children }) {
   return (
-    <span className="px-2 py-1 rounded" style={{ background: "#EDEDE9", fontSize: 11, fontWeight: 600, color: "#3F4650" }}>
+    <span className="px-2 py-1 rounded" style={{ background: C.chip, fontSize: 11, fontWeight: 600, color: C.chipText }}>
       {children}
     </span>
   );
@@ -1089,7 +1101,7 @@ function Demo({ children, onClick }) {
     <button
       onClick={onClick}
       className="btn px-3 py-2 rounded-lg transition-colors"
-      style={{ background: "#D9DDE2", color: "#3F4650", fontSize: 12, fontWeight: 600 }}
+      style={{ background: "var(--og-demo-bg)", color: C.chipText, fontSize: 12, fontWeight: 600 }}
     >
       {children}
     </button>
@@ -1098,14 +1110,14 @@ function Demo({ children, onClick }) {
 
 function Metric({ label, value, unit, mono, alert }) {
   return (
-    <div className="rounded-lg p-3" style={{ background: "#F1F1ED" }}>
-      <div style={{ fontSize: 11, color: "#6E7887", lineHeight: 1.4 }}>{label}</div>
+    <div className="rounded-lg p-3" style={{ background: C.paper2 }}>
+      <div style={{ fontSize: 11, color: C.paperMute, lineHeight: 1.4 }}>{label}</div>
       <div
         className="mt-1"
         style={{
           fontSize: 24,
           fontWeight: 700,
-          color: alert ? "#C0392B" : "#141A24",
+          color: alert ? C.alert : C.ink,
           fontFamily: mono ? MONO : undefined,
           fontVariantNumeric: "tabular-nums",
         }}
